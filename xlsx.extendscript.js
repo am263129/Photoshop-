@@ -816,10 +816,15 @@ var Uint8ArrayWriter = _dereq_('./uint8ArrayWriter');
  */
 var getRawData = function(file) {
     if (file._data instanceof CompressedObject) {
+        alert('0');
+        alert(file._data.constructor.name);
         file._data = file._data.getContent();
+        alert('1');
+        
         file.options.binary = true;
-        file.options.base64 = false;
 
+        file.options.base64 = false;
+        alert('2');
         if (utils.getTypeOf(file._data) === "uint8array") {
             var copy = file._data;
             // when reading an arraybuffer, the CompressedObject mechanism will keep it and subarray() a Uint8Array.
@@ -830,6 +835,7 @@ var getRawData = function(file) {
                 file._data.set(copy, 0);
             }
         }
+        alert('3');
     }
     return file._data;
 };
@@ -861,27 +867,43 @@ var getBinaryData = function(file) {
  * @return {String} the string representing this._data.
  */
 var dataToString = function(asUTF8) {
+    
+
     var result = getRawData(this);
+    
+
+
+
     if (result === null || typeof result === "undefined") {
         return "";
     }
+    
     // if the data is a base64 string, we decode it before checking the encoding !
     if (this.options.base64) {
         result = base64.decode(result);
     }
+    
     if (asUTF8 && this.options.binary) {
         // JSZip.prototype.utf8decode supports arrays as input
         // skip to array => string step, utf8decode will do it.
         result = out.utf8decode(result);
-    }
+    }    
     else {
+      
         // no utf8 transformation, do the array => string step.
         result = utils.transformTo("string", result);
+
+
+
+
+
     }
+    
 
     if (!asUTF8 && !this.options.binary) {
         result = utils.transformTo("string", out.utf8encode(result));
     }
+    
     return result;
 };
 /**
@@ -924,7 +946,10 @@ ZipObject.prototype = {
      * @return {string} the content as binary.
      */
     asBinary: function() {
-        return dataToString.call(this, false);
+        
+        a = dataToString.call(this, false);
+        
+        return a;
     },
     /**
      * Returns the content as a nodejs Buffer.
@@ -9160,7 +9185,7 @@ module.exports = ZStream;
 /*global global, exports, module, require:false, process:false, Buffer:false, ArrayBuffer:false */
 var XLSX = {};
 function make_xlsx_lib(XLSX){
-XLSX.version = '0.15.0';
+XLSX.version = '0.15.1';
 var current_codepage = 1200, current_ansi = 1252;
 /*global cptable:true, window */
 if(typeof module !== "undefined" && typeof require !== 'undefined') {
@@ -10808,17 +10833,18 @@ function read_date(blob, offset) {
 	return new Date(( ( (__readUInt32LE(blob,offset+4)/1e7)*Math.pow(2,32)+__readUInt32LE(blob,offset)/1e7 ) - 11644473600)*1000);
 }
 
-function read_file(filename, options) {
+function read_file(filename, options) {  
 	get_fs();
 	return parse(fs.readFileSync(filename), options);
 }
 
-function read(blob, options) {
+function read(blob, options) {    
 	switch(options && options.type || "base64") {
 		case "file": return read_file(blob, options);
 		case "base64": return parse(s2a(Base64.decode(blob)), options);
-		case "binary": return parse(s2a(blob), options);
-	}
+		case "binary":       
+      return parse(s2a(blob), options);
+	}  
 	return parse(blob, options);
 }
 
@@ -11454,53 +11480,6 @@ function warn_or_throw(wrn, msg) {
 	else throw new Error(msg);
 }
 
-function parse_zip(file, options) {
-	var blob = file;
-	prep_blob(blob, 0);
-
-	var FileIndex = [], FullPaths = [];
-	var o = {
-		FileIndex: FileIndex,
-		FullPaths: FullPaths
-	};
-	init_cfb(o, { root: options.root });
-
-	/* find end of central directory, start just after signature */
-	var i = blob.length - 4;
-	while((blob[i] != 0x50 || blob[i+1] != 0x4b || blob[i+2] != 0x05 || blob[i+3] != 0x06) && i >= 0) --i;
-	blob.l = i + 4;
-
-	/* parse end of central directory */
-	blob.l += 4;
-	var fcnt = blob.read_shift(2);
-	blob.l += 6;
-	var start_cd = blob.read_shift(4);
-
-	/* parse central directory */
-	blob.l = start_cd;
-
-	for(i = 0; i < fcnt; ++i) {
-		/* trust local file header instead of CD entry */
-		blob.l += 20;
-		var csz = blob.read_shift(4);
-		var usz = blob.read_shift(4);
-		var namelen = blob.read_shift(2);
-		var efsz = blob.read_shift(2);
-		var fcsz = blob.read_shift(2);
-		blob.l += 8;
-		var offset = blob.read_shift(4);
-		var EF = parse_extra_field(blob.slice(blob.l+namelen, blob.l+namelen+efsz));
-		blob.l += namelen + efsz + fcsz;
-
-		var L = blob.l;
-		blob.l = offset + 4;
-		parse_local_file(blob, csz, usz, o, EF);
-		blob.l = L;
-	}
-
-	return o;
-}
-
 
 /* head starts just after local file header signature */
 function parse_local_file(blob, csz, usz, o, EF) {
@@ -11935,11 +11914,39 @@ function split_regex(str, re, def) {
 }
 function getdatastr(data) {
 	if(!data) return null;
-	if(data.data) return debom(data.data);
-	if(data.asNodeBuffer && has_buf) return debom(data.asNodeBuffer().toString('binary'));
-	if(data.asBinary) return debom(data.asBinary());
-	if(data._data && data._data.getContent) return debom(cc2str(Array.prototype.slice.call(data._data.getContent(),0)));
-	if(data.content && data.type) return debom(cc2str(data.content));
+	if(data.data){
+    
+    a= debom(data.data);
+    
+    return  a;
+  } 
+	if(data.asNodeBuffer && has_buf){
+    
+     a = debom(data.asNodeBuffer().toString('binary'));
+    
+     return a;
+  } 
+	if(data.asBinary){        
+
+    p = data.asBinary();    
+
+    
+    a =debom(p);
+    
+    return a;
+  } 
+	if(data._data && data._data.getContent){
+    
+    a = debom(cc2str(Array.prototype.slice.call(data._data.getContent(),0)));
+    
+    return a;
+  } 
+	if(data.content && data.type){
+    
+    a =debom(cc2str(data.content));
+    
+    return a;
+  } 
 	return null;
 }
 
@@ -11956,7 +11963,15 @@ function getdatabin(data) {
 	return null;
 }
 
-function getdata(data) { return (data && data.name.slice(-4) === ".bin") ? getdatabin(data) : getdatastr(data); }
+function getdata(data) { 
+  if(data && data.name.slice(-4) === ".bin"){
+    b =  getdatabin(data);
+    return b;
+  }else{    
+    k = getdatastr(data);     
+    return k;
+  }  
+}
 
 /* Part 2 Section 10.1.2 "Mapping Content Types" Names are case-insensitive */
 /* OASIS does not comment on filename case sensitivity */
@@ -11976,9 +11991,14 @@ function getzipfile(zip, file) {
 	return o;
 }
 
-function getzipdata(zip, file, safe) {
-	if(!safe) return getdata(getzipfile(zip, file));
+function getzipdata(zip, file, safe) {  
+	if(!safe){
+    k = getzipfile(zip, file);    
+    b = getdata(k);    
+    return b;
+  } 
 	if(!file) return null;
+ 
 	try { return getzipdata(zip, file); } catch(e) { return null; }
 }
 
@@ -22013,7 +22033,7 @@ function parse_ws_xml_dim(ws, s) {
 	if(d.s.r<=d.e.r && d.s.c<=d.e.c && d.s.r>=0 && d.s.c>=0) ws["!ref"] = encode_range(d);
 }
 var mergecregex = /<(?:\w:)?mergeCell ref="[A-Z0-9:]+"\s*[\/]?>/g;
-var sheetdataregex = /<(?:\w+:)?sheetData>([\s\S]*)<\/(?:\w+:)?sheetData>/;
+var sheetdataregex = /<(?:\w+:)?sheetData[^>]*>([\s\S]*)<\/(?:\w+:)?sheetData>/;
 var hlinkregex = /<(?:\w:)?hyperlink [^>]*>/mg;
 var dimregex = /"(\w*:\w*)"/;
 var colregex = /<(?:\w:)?col\b[^>]*[\/]?>/g;
@@ -28100,6 +28120,10 @@ var HTML_ = (function() {
 				var m = cell, cc = 0;
 				/* TODO: parse styles etc */
 				while(m.charAt(0) == "<" && (cc = m.indexOf(">")) > -1) m = m.slice(cc+1);
+				for(var midx = 0; midx < merges.length; ++midx) {
+					var _merge = merges[midx];
+					if(_merge.s.c == C && _merge.s.r < R && R <= _merge.e.r) { C = _merge.e.c + 1; midx = -1; }
+				}
 				var tag = parsexmltag(cell.slice(0, cell.indexOf(">")));
 				CS = tag.colspan ? +tag.colspan : 1;
 				if((RS = +tag.rowspan)>1 || CS>1) merges.push({s:{r:R,c:C},e:{r:R + (RS||1) - 1, c:C + CS - 1}});
@@ -28126,6 +28150,7 @@ var HTML_ = (function() {
 			}
 		}
 		ws['!ref'] = encode_range(range);
+		if(merges.length) ws["!merges"] = merges;
 		return ws;
 	}
 	function html_to_book(str, opts) {
@@ -28145,11 +28170,11 @@ var HTML_ = (function() {
 			if(RS < 0) continue;
 			var coord = encode_cell({r:R,c:C});
 			var cell = o.dense ? (ws[R]||[])[C] : ws[coord];
-			var sp = {};
-			if(RS > 1) sp.rowspan = RS;
-			if(CS > 1) sp.colspan = CS;
 			/* TODO: html entities */
 			var w = (cell && cell.v != null) && (cell.h || escapehtml(cell.w || (format_cell(cell), cell.w) || "")) || "";
+			var sp = ({});
+			if(RS > 1) sp.rowspan = RS;
+			if(CS > 1) sp.colspan = CS;
 			sp.t = cell && cell.t || 'z';
 			if(o.editable) w = '<span contenteditable="true">' + w + '</span>';
 			sp.id = "sjs-" + coord;
@@ -29161,17 +29186,18 @@ function safe_parse_sheet(zip, path, relsPath, sheet, idx, sheetRels, sheets, st
 function strip_front_slash(x) { return x.charAt(0) == '/' ? x.slice(1) : x; }
 
 function parse_zip(zip, opts) {
+  
 	make_ssf(SSF);
 	opts = opts || {};
 	fix_read_opts(opts);
-
+  
 	/* OpenDocument Part 3 Section 2.2.1 OpenDocument Package */
 	if(safegetzipfile(zip, 'META-INF/manifest.xml')) return parse_ods(zip, opts);
 	/* UOC */
 	if(safegetzipfile(zip, 'objectdata.xml')) return parse_ods(zip, opts);
 	/* Numbers */
 	if(safegetzipfile(zip, 'Index/Document.iwa')) throw new Error('Unsupported NUMBERS file');
-
+  
 	var entries = zipentries(zip);
 	var dir = parse_ct((getzipstr(zip, '[Content_Types].xml')));
 	var xlsb = false;
@@ -29186,6 +29212,7 @@ function parse_zip(zip, opts) {
 		dir.workbooks.push(binname);
 		xlsb = true;
 	}
+  
 	if(dir.workbooks[0].slice(-3) == "bin") xlsb = true;
 
 	var themes = ({});
@@ -29259,6 +29286,8 @@ function parse_zip(zip, opts) {
 
 	/* Numbers iOS hack */
 	var nmode = (getzipdata(zip,"xl/worksheets/sheet.xml",true))?1:0;
+  
+
 	for(i = 0; i != props.Worksheets; ++i) {
 		var stype = "sheet";
 		if(wbrels && wbrels[i]) {
@@ -29296,7 +29325,7 @@ function parse_zip(zip, opts) {
 	if(opts.bookVBA) {
 		if(dir.vba.length > 0) out.vbaraw = getzipdata(zip,strip_front_slash(dir.vba[0]),true);
 		else if(dir.defaults && dir.defaults.bin === CT_VBA) out.vbaraw = getzipdata(zip, 'xl/vbaProject.bin',true);
-	}
+	}  
 	return out;
 }
 
@@ -29495,11 +29524,14 @@ function read_cfb(cfb, opts) {
 }
 
 function read_zip(data, opts) {
+  
 var zip, d = data;
 	var o = opts||{};
 	if(!o.type) o.type = (has_buf && Buffer.isBuffer(data)) ? "buffer" : "base64";
+  
 	zip = zip_read(d, o);
-	return parse_zip(zip, o);
+  k = parse_zip(zip, o);
+  return k;
 }
 
 function read_plaintext(data, o) {
@@ -29537,14 +29569,16 @@ function bstrify(data) {
 	return !data.match(/[^\x00-\x7F]/) ? data : utf8write(data);
 }
 
-function read_prn(data, d, o, str) {
+function read_prn(data, d, o, str) {  
 	if(str) { o.type = "string"; return PRN.to_workbook(data, o); }
 	return PRN.to_workbook(d, o);
 }
 
-function readSync(data, opts) {
+function readSync(data, opts) {  
 	reset_cp();
+
 	if(typeof ArrayBuffer !== 'undefined' && data instanceof ArrayBuffer) return readSync(new Uint8Array(data), opts);
+
 	var d = data, n = [0,0,0,0], str = false;
 	var o = opts||{};
 	_ssfopts = {};
@@ -29554,11 +29588,13 @@ function readSync(data, opts) {
 	if(o.type == "string") { str = true; o.type = "binary"; o.codepage = 65001; d = bstrify(data); }
 	if(o.type == 'array' && typeof Uint8Array !== 'undefined' && data instanceof Uint8Array && typeof ArrayBuffer !== 'undefined') {
 		// $FlowIgnore
-		var ab=new ArrayBuffer(3), vu=new Uint8Array(ab); vu.foo="bar";
+		var ab=new ArrayBuffer(3), vu=new Uint8Array(ab); vu.foo="bar";    
 		// $FlowIgnore
 		if(!vu.foo) {o=dup(o); o.type='array'; return readSync(ab2a(d), o);}
 	}
-	switch((n = firstbyte(d, o))[0]) {
+  
+  
+	switch((n = firstbyte(d, o))[0]) {    
 		case 0xD0: return read_cfb(CFB.read(d, o), o);
 		case 0x09: return parse_xlscfb(d, o);
 		case 0x3C: return parse_xlml(d, o);
@@ -29571,13 +29607,14 @@ function readSync(data, opts) {
 		case 0x03: case 0x83: case 0x8B: case 0x8C: return DBF.to_workbook(d, o);
 		case 0x7B: if(n[1] === 0x5C && n[2] === 0x72 && n[3] === 0x74) return RTF.to_workbook(d, o); break;
 		case 0x0A: case 0x0D: case 0x20: return read_plaintext_raw(d, o);
-	}
+	}  
 	if(n[2] <= 12 && n[3] <= 31) return DBF.to_workbook(d, o);
+
 	return read_prn(data, d, o, str);
 }
 
 function readFileSync(filename, opts) {
-	var o = opts||{}; o.type = 'file';
+	var o = opts||{}; o.type = 'file';  
 	return readSync(filename, o);
 }
 function write_cfb_ctr(cfb, o) {
